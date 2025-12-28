@@ -23,7 +23,7 @@ endif()
 # Library sources
 set(FB_STRINGS_SOURCES
   src/string_utils.cpp
-#  src/string_list.cpp
+  src/string_list.cpp
 #  src/format.cpp
 )
 

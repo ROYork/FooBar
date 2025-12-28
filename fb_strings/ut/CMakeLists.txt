@@ -24,15 +24,15 @@ target_link_libraries(test_string_utils
 )
 
 # Test executable for string_list
-#add_executable(test_string_list
-#  test_string_list.cpp
-#)
+add_executable(test_string_list
+  test_string_list.cpp
+)
 
-#target_link_libraries(test_string_list
-#  PRIVATE
-#    fb_strings
-#    GTest::gtest_main
-#)
+target_link_libraries(test_string_list
+  PRIVATE
+    fb_strings
+    GTest::gtest_main
+)
 
 # Test executable for format
 #add_executable(test_format
@@ -58,5 +58,5 @@ target_link_libraries(benchmark_split
 # Include GoogleTest module for test discovery
 include(GoogleTest)
 gtest_discover_tests(test_string_utils)
-#gtest_discover_tests(test_string_list)
+gtest_discover_tests(test_string_list)
 #gtest_discover_tests(test_format)
