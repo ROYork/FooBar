@@ -1,0 +1,22 @@
+# .clang-format
+Language: Cpp
+BasedOnStyle: LLVM 
+BreakBeforeBraces: Allman
+UseTab: Never # Use spaces for indentation
+IndentWidth: 2
+TabWidth: 2
+
+BreakConstructorInitializers: AfterColon
+ConstructorInitializerIndentWidth: 2
+PackConstructorInitializers: Never
+
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: true
+
+AlignAfterOpenBracket: Align
+AlignArrayOfStructures: Left
+
+AlignConsecutiveAssignments: AcrossEmptyLines
+
+BinPackParameters: OnePerLine
