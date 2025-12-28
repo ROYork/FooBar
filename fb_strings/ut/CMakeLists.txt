@@ -35,15 +35,15 @@ target_link_libraries(test_string_list
 )
 
 # Test executable for format
-#add_executable(test_format
-#  test_format.cpp
-#)
+add_executable(test_format
+  test_format.cpp
+)
 
-#target_link_libraries(test_format
-#  PRIVATE
-#    fb_strings
-#    GTest::gtest_main
-#)
+target_link_libraries(test_format
+  PRIVATE
+    fb_strings
+    GTest::gtest_main
+)
 
 # Benchmark executable
 add_executable(benchmark_split
@@ -59,4 +59,4 @@ target_link_libraries(benchmark_split
 include(GoogleTest)
 gtest_discover_tests(test_string_utils)
 gtest_discover_tests(test_string_list)
-#gtest_discover_tests(test_format)
+gtest_discover_tests(test_format)

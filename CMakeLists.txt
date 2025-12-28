@@ -58,5 +58,6 @@ endif()
 
 
 add_subdirectory(fb_strings)
+add_subdirectory(fb_signal)
 
 enable_testing()

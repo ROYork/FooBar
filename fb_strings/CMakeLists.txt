@@ -24,7 +24,7 @@ endif()
 set(FB_STRINGS_SOURCES
   src/string_utils.cpp
   src/string_list.cpp
-#  src/format.cpp
+  src/format.cpp
 )
 
 # Create the static library
