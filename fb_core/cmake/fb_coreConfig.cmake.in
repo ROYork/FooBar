@@ -1,0 +1,10 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# fb_core currently has no required external dependencies. This block exists to
+# keep parity with the configuration layout used by the other fb modules.
+
+include("${CMAKE_CURRENT_LIST_DIR}/fb_coreTargets.cmake")
+
+check_required_components(fb_core)

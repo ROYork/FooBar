@@ -39,3 +39,18 @@
 
 # debug information files
 *.dwo
+
+# OS File Stores
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# CMake build files
+build/
+build_*/
+
+# Qt Creator
+*.user
+*.user.*
+

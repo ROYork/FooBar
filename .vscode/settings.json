@@ -1,0 +1,6 @@
+{
+  "sonarlint.connectedMode.project": {
+    "connectionId": "royork",
+    "projectKey": "ROYork_FooBar"
+  }
+}
