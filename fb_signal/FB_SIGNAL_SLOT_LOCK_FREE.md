@@ -205,11 +205,11 @@ The implementation must include comprehensive tests for:
 ## 9. Deliverables
 
 1. **Source Code**
-   - Header-only library in `include/fb_signals/`
+   - Header-only library in `include/fb/`
    - All implementation in header files
 
 2. **Unit Tests**
-   - Test files in `ut/tb_signals/`
+   - Test files in `ut/fb/`
    - CMake integration for test discovery
 
 3. **Build System**
