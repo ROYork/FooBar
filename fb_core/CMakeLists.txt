@@ -25,6 +25,7 @@ endif()
 
 set(FB_CORE_SOURCES
     src/Library.cpp
+    src/csv_parser.cpp
 )
 
 set(FB_CORE_HEADERS
@@ -34,6 +35,7 @@ set(FB_CORE_HEADERS
     include/fb/circular_buffer.h
     include/fb/circular_buffer_iterator.h
     include/fb/span_compat.h
+    include/fb/csv_parser.h
 )
 
 add_library(fb_core ${FB_CORE_SOURCES} ${FB_CORE_HEADERS})
