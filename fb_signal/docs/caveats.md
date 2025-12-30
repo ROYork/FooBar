@@ -358,3 +358,11 @@ auto& queue = fb::thread_event_queue();
 std::cout << "Pending: " << queue.pending_count() << "\n";
 std::cout << "Dropped: " << queue.dropped_count() << "\n";
 ```
+
+---
+
+## See Also
+
+- [index.md](index.md) - Library overview
+- [usage.md](usage.md) - Usage examples
+- [design.md](design.md) - Design decisions

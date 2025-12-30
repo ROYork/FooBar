@@ -167,3 +167,11 @@ include/fb/
 2. **No propagation control:** Cannot stop emission mid-way
 3. **Fixed queue size:** Event queue has compile-time capacity
 4. **C++17 required:** Uses `std::shared_ptr` atomic operations
+
+---
+
+## See Also
+
+- [index.md](index.md) - Library overview
+- [usage.md](usage.md) - Usage examples
+- [caveats.md](caveats.md) - Gotchas and best practices

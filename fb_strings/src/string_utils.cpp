@@ -2431,4 +2431,460 @@ size_t levenshtein_distance(std::string_view a, std::string_view b)
   return prev[b.size()];
 }
 
+// ============================================================================
+// Case Style Conversions
+// ============================================================================
+
+namespace
+{
+
+// Helper to split string into words for case conversion
+std::vector<std::string> split_into_words(std::string_view str)
+{
+  std::vector<std::string> words;
+  std::string              current_word;
+
+  for (size_t i = 0; i < str.size(); ++i)
+  {
+    char ch = str[i];
+
+    // Separators: space, underscore, hyphen
+    if (ch == ' ' || ch == '_' || ch == '-')
+    {
+      if (!current_word.empty())
+      {
+        words.push_back(std::move(current_word));
+        current_word.clear();
+      }
+      continue;
+    }
+
+    // Check for camelCase/PascalCase boundary
+    if (is_ascii_upper(ch))
+    {
+      // If we have accumulated lowercase letters, this is a word boundary
+      if (!current_word.empty() && is_ascii_lower(current_word.back()))
+      {
+        words.push_back(std::move(current_word));
+        current_word.clear();
+      }
+      // Check for consecutive uppercase followed by lowercase (e.g., HTTPServer -> HTTP, Server)
+      else if (!current_word.empty() && is_ascii_upper(current_word.back()) && i + 1 < str.size() &&
+               is_ascii_lower(str[i + 1]))
+      {
+        words.push_back(std::move(current_word));
+        current_word.clear();
+      }
+    }
+
+    current_word.push_back(ch);
+  }
+
+  if (!current_word.empty())
+  {
+    words.push_back(std::move(current_word));
+  }
+
+  return words;
+}
+
+} // namespace
+
+std::string to_snake_case(std::string_view str)
+{
+  auto words = split_into_words(str);
+  if (words.empty())
+  {
+    return std::string();
+  }
+
+  std::string result;
+  for (size_t i = 0; i < words.size(); ++i)
+  {
+    if (i > 0)
+    {
+      result.push_back('_');
+    }
+    for (char ch : words[i])
+    {
+      result.push_back(to_ascii_lower(ch));
+    }
+  }
+  return result;
+}
+
+std::string to_camel_case(std::string_view str)
+{
+  auto words = split_into_words(str);
+  if (words.empty())
+  {
+    return std::string();
+  }
+
+  std::string result;
+  for (size_t i = 0; i < words.size(); ++i)
+  {
+    bool first_char = true;
+    for (char ch : words[i])
+    {
+      if (first_char)
+      {
+        result.push_back(i == 0 ? to_ascii_lower(ch) : to_ascii_upper(ch));
+        first_char = false;
+      }
+      else
+      {
+        result.push_back(to_ascii_lower(ch));
+      }
+    }
+  }
+  return result;
+}
+
+std::string to_pascal_case(std::string_view str)
+{
+  auto words = split_into_words(str);
+  if (words.empty())
+  {
+    return std::string();
+  }
+
+  std::string result;
+  for (const auto& word : words)
+  {
+    bool first_char = true;
+    for (char ch : word)
+    {
+      if (first_char)
+      {
+        result.push_back(to_ascii_upper(ch));
+        first_char = false;
+      }
+      else
+      {
+        result.push_back(to_ascii_lower(ch));
+      }
+    }
+  }
+  return result;
+}
+
+std::string to_kebab_case(std::string_view str)
+{
+  auto words = split_into_words(str);
+  if (words.empty())
+  {
+    return std::string();
+  }
+
+  std::string result;
+  for (size_t i = 0; i < words.size(); ++i)
+  {
+    if (i > 0)
+    {
+      result.push_back('-');
+    }
+    for (char ch : words[i])
+    {
+      result.push_back(to_ascii_lower(ch));
+    }
+  }
+  return result;
+}
+
+std::string to_screaming_snake_case(std::string_view str)
+{
+  auto words = split_into_words(str);
+  if (words.empty())
+  {
+    return std::string();
+  }
+
+  std::string result;
+  for (size_t i = 0; i < words.size(); ++i)
+  {
+    if (i > 0)
+    {
+      result.push_back('_');
+    }
+    for (char ch : words[i])
+    {
+      result.push_back(to_ascii_upper(ch));
+    }
+  }
+  return result;
+}
+
+// ============================================================================
+// Pattern Matching
+// ============================================================================
+
+bool matches_pattern(std::string_view str,
+                     std::string_view pattern,
+                     bool case_sensitive)
+{
+  size_t s = 0; // String position
+  size_t p = 0; // Pattern position
+  size_t star_p   = std::string::npos; // Last '*' position in pattern
+  size_t star_s   = std::string::npos; // String position when we saw '*'
+
+  while (s < str.size())
+  {
+    if (p < pattern.size())
+    {
+      char pc = pattern[p];
+      char sc = str[s];
+
+      // Case-insensitive comparison
+      if (!case_sensitive)
+      {
+        pc = to_ascii_lower(pc);
+        sc = to_ascii_lower(sc);
+      }
+
+      if (pc == '?')
+      {
+        // '?' matches any single character
+        ++s;
+        ++p;
+        continue;
+      }
+
+      if (pc == '*')
+      {
+        // '*' matches any sequence - remember position for backtracking
+        star_p = p;
+        star_s = s;
+        ++p;
+        continue;
+      }
+
+      if (pc == sc)
+      {
+        // Characters match
+        ++s;
+        ++p;
+        continue;
+      }
+    }
+
+    // No match - try backtracking to last '*'
+    if (star_p != std::string::npos)
+    {
+      p = star_p + 1;
+      ++star_s;
+      s = star_s;
+      continue;
+    }
+
+    // No '*' to backtrack to - pattern doesn't match
+    return false;
+  }
+
+  // Skip trailing '*' in pattern
+  while (p < pattern.size() && pattern[p] == '*')
+  {
+    ++p;
+  }
+
+  return p == pattern.size();
+}
+
+// ============================================================================
+// Additional String Distance/Similarity Functions
+// ============================================================================
+
+size_t hamming_distance(std::string_view a, std::string_view b)
+{
+  if (a.size() != b.size())
+  {
+    return std::numeric_limits<size_t>::max();
+  }
+
+  size_t distance = 0;
+  for (size_t i = 0; i < a.size(); ++i)
+  {
+    if (a[i] != b[i])
+    {
+      ++distance;
+    }
+  }
+  return distance;
+}
+
+double similarity(std::string_view a, std::string_view b)
+{
+  if (a.empty() && b.empty())
+  {
+    return 1.0;
+  }
+
+  size_t max_len = std::max(a.size(), b.size());
+  if (max_len == 0)
+  {
+    return 1.0;
+  }
+
+  size_t distance = levenshtein_distance(a, b);
+  return 1.0 - (static_cast<double>(distance) / static_cast<double>(max_len));
+}
+
+bool fuzzy_match(std::string_view str,
+                 std::string_view target,
+                 size_t max_distance)
+{
+  return levenshtein_distance(str, target) <= max_distance;
+}
+
+// ============================================================================
+// Text Analysis Functions
+// ============================================================================
+
+size_t word_count(std::string_view str)
+{
+  size_t count        = 0;
+  bool   in_word      = false;
+
+  for (char ch : str)
+  {
+    if (is_whitespace(ch))
+    {
+      in_word = false;
+    }
+    else if (!in_word)
+    {
+      ++count;
+      in_word = true;
+    }
+  }
+
+  return count;
+}
+
+std::string expand_tabs(std::string_view str, size_t tab_width)
+{
+  if (tab_width == 0)
+  {
+    return remove_all(str, '\t');
+  }
+
+  std::string result;
+  result.reserve(str.size());
+  size_t col = 0;
+
+  for (char ch : str)
+  {
+    if (ch == '\t')
+    {
+      size_t spaces = tab_width - (col % tab_width);
+      result.append(spaces, ' ');
+      col += spaces;
+    }
+    else if (ch == '\n')
+    {
+      result.push_back(ch);
+      col = 0;
+    }
+    else
+    {
+      result.push_back(ch);
+      ++col;
+    }
+  }
+
+  return result;
+}
+
+std::string normalize_line_endings(std::string_view str, std::string_view ending)
+{
+  std::string result;
+  result.reserve(str.size());
+
+  for (size_t i = 0; i < str.size(); ++i)
+  {
+    if (str[i] == '\r')
+    {
+      result.append(ending);
+      // Skip LF if CRLF
+      if (i + 1 < str.size() && str[i + 1] == '\n')
+      {
+        ++i;
+      }
+    }
+    else if (str[i] == '\n')
+    {
+      result.append(ending);
+    }
+    else
+    {
+      result.push_back(str[i]);
+    }
+  }
+
+  return result;
+}
+
+bool is_palindrome(std::string_view str)
+{
+  // Extract only alphanumeric characters in lowercase
+  std::string clean;
+  clean.reserve(str.size());
+  for (char ch : str)
+  {
+    if (is_ascii_alpha(ch) || is_ascii_digit(ch))
+    {
+      clean.push_back(to_ascii_lower(ch));
+    }
+  }
+
+  if (clean.empty())
+  {
+    return true;
+  }
+
+  size_t left  = 0;
+  size_t right = clean.size() - 1;
+  while (left < right)
+  {
+    if (clean[left] != clean[right])
+    {
+      return false;
+    }
+    ++left;
+    --right;
+  }
+  return true;
+}
+
+std::string quote(std::string_view str, char quote_char)
+{
+  std::string result;
+  result.reserve(str.size() + 2);
+  result.push_back(quote_char);
+  result.append(str);
+  result.push_back(quote_char);
+  return result;
+}
+
+std::string unquote(std::string_view str)
+{
+  if (str.size() < 2)
+  {
+    return std::string(str);
+  }
+
+  char first = str.front();
+  char last  = str.back();
+
+  // Check for matching quotes
+  if ((first == '"' && last == '"') ||
+      (first == '\'' && last == '\'') ||
+      (first == '`' && last == '`'))
+  {
+    return std::string(str.substr(1, str.size() - 2));
+  }
+
+  return std::string(str);
+}
+
 } // namespace fb

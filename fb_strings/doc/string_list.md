@@ -440,3 +440,35 @@ auto result = raw
 
 // result: "apple, banana, cherry"
 ```
+
+---
+
+## Comparison with std::vector<std::string>
+
+| Feature | string_list | std::vector<std::string> |
+|---------|-------------|-----------------------------|
+| STL interface | Yes | Yes |
+| String filtering | Yes | No (manual loop) |
+| Join operation | Yes | No |
+| Trim all strings | Yes | No |
+| Remove duplicates | Yes | No (manual) |
+| Case-insensitive ops | Yes | No |
+| Natural sort | Yes | No |
+| Method chaining | Yes | No |
+
+---
+
+## What's NOT Implemented
+
+- **Regex filtering inline**: Use `filter()` with `std::regex_match`
+- **In-place filter**: `filter()` returns a new list
+- **Parallel operations**: All operations are single-threaded
+
+---
+
+## See Also
+
+- [string_utils.md](string_utils.md) - String manipulation functions
+- [iterators.md](iterators.md) - Line/token iterators
+- [format.md](format.md) - String formatting
+

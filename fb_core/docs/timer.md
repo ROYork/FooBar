@@ -825,7 +825,30 @@ private:
 
 ---
 
+## Comparison with Other Approaches
+
+| Feature | fb::Timer | std::thread sleep | Boost.Asio timer |
+|---------|-----------|-------------------|------------------|
+| Signal/Slot integration | Yes | No | No |
+| Thread-safe | Yes | N/A | Yes |
+| Single-shot mode | Yes | Manual | Yes |
+| Repeating mode | Yes | Manual | Manual |
+| Drift correction | Yes | No | No |
+| Remaining time query | Yes | No | Yes |
+
+---
+
+## What's NOT Implemented
+
+- **Sub-millisecond precision**: Minimum interval is 1ms
+- **Timer wheel/hierarchy**: Single timer per instance
+- **Pause without reset**: Use stop()/start() to pause
+- **Multiple timeout signals**: One signal per timer
+
+---
+
 ## See Also
+
 
 - [fb_signal Documentation](../../fb_signal/doc/index.md) - Signal/slot system
 - [Examples](../examples/timer_examples.cpp) - Complete example applications

@@ -892,4 +892,232 @@ std::string common_suffix(std::string_view a, std::string_view b);
  */
 size_t levenshtein_distance(std::string_view a, std::string_view b);
 
+// ============================================================================
+// Case Style Conversions
+// ============================================================================
+
+/**
+ * @brief Convert string to snake_case
+ *
+ * Converts camelCase, PascalCase, kebab-case, or space-separated words
+ * to snake_case (lowercase with underscores).
+ *
+ * @param str Input string
+ * @return snake_case string
+ *
+ * Examples:
+ *   "HelloWorld"    -> "hello_world"
+ *   "helloWorld"    -> "hello_world"
+ *   "Hello World"   -> "hello_world"
+ *   "hello-world"   -> "hello_world"
+ *   "HTTPServer"    -> "http_server"
+ */
+std::string to_snake_case(std::string_view str);
+
+/**
+ * @brief Convert string to camelCase
+ *
+ * Converts snake_case, PascalCase, kebab-case, or space-separated words
+ * to camelCase (first word lowercase, subsequent words capitalized).
+ *
+ * @param str Input string
+ * @return camelCase string
+ *
+ * Examples:
+ *   "hello_world"   -> "helloWorld"
+ *   "HelloWorld"    -> "helloWorld"
+ *   "Hello World"   -> "helloWorld"
+ *   "hello-world"   -> "helloWorld"
+ */
+std::string to_camel_case(std::string_view str);
+
+/**
+ * @brief Convert string to PascalCase
+ *
+ * Converts snake_case, camelCase, kebab-case, or space-separated words
+ * to PascalCase (each word capitalized, no separators).
+ *
+ * @param str Input string
+ * @return PascalCase string
+ *
+ * Examples:
+ *   "hello_world"   -> "HelloWorld"
+ *   "helloWorld"    -> "HelloWorld"
+ *   "Hello World"   -> "HelloWorld"
+ *   "hello-world"   -> "HelloWorld"
+ */
+std::string to_pascal_case(std::string_view str);
+
+/**
+ * @brief Convert string to kebab-case
+ *
+ * Converts camelCase, PascalCase, snake_case, or space-separated words
+ * to kebab-case (lowercase with hyphens).
+ *
+ * @param str Input string
+ * @return kebab-case string
+ *
+ * Examples:
+ *   "HelloWorld"    -> "hello-world"
+ *   "helloWorld"    -> "hello-world"
+ *   "Hello World"   -> "hello-world"
+ *   "hello_world"   -> "hello-world"
+ */
+std::string to_kebab_case(std::string_view str);
+
+/**
+ * @brief Convert string to SCREAMING_SNAKE_CASE
+ *
+ * Converts any case style to SCREAMING_SNAKE_CASE (uppercase with underscores).
+ *
+ * @param str Input string
+ * @return SCREAMING_SNAKE_CASE string
+ *
+ * Examples:
+ *   "HelloWorld"    -> "HELLO_WORLD"
+ *   "helloWorld"    -> "HELLO_WORLD"
+ *   "hello_world"   -> "HELLO_WORLD"
+ *   "hello-world"   -> "HELLO_WORLD"
+ */
+std::string to_screaming_snake_case(std::string_view str);
+
+// ============================================================================
+// Pattern Matching
+// ============================================================================
+
+/**
+ * @brief Match string against wildcard pattern
+ *
+ * Supports glob-style wildcards:
+ * - '*' matches any sequence of characters (including empty)
+ * - '?' matches exactly one character
+ *
+ * @param str String to match
+ * @param pattern Wildcard pattern
+ * @param case_sensitive Whether to match case-sensitively (default: true)
+ * @return true if string matches pattern
+ *
+ * Examples:
+ *   matches_pattern("hello.txt", "*.txt")        -> true
+ *   matches_pattern("hello.txt", "hello.*")      -> true
+ *   matches_pattern("hello.txt", "h???o.txt")    -> true
+ *   matches_pattern("hello.txt", "*.doc")        -> false
+ *   matches_pattern("Hello.TXT", "*.txt", false) -> true
+ */
+bool matches_pattern(std::string_view str,
+                     std::string_view pattern,
+                     bool case_sensitive = true);
+
+// ============================================================================
+// Additional String Distance/Similarity Functions
+// ============================================================================
+
+/**
+ * @brief Calculate Hamming distance between two strings
+ *
+ * Counts positions where corresponding characters differ.
+ * Strings must be the same length.
+ *
+ * @param a First string
+ * @param b Second string
+ * @return Number of differing positions, or max size_t if lengths differ
+ */
+size_t hamming_distance(std::string_view a, std::string_view b);
+
+/**
+ * @brief Calculate similarity ratio between two strings
+ *
+ * Returns a value between 0.0 (completely different) and 1.0 (identical).
+ * Based on Levenshtein distance normalized by the longer string length.
+ *
+ * @param a First string
+ * @param b Second string
+ * @return Similarity ratio (0.0 to 1.0)
+ */
+double similarity(std::string_view a, std::string_view b);
+
+/**
+ * @brief Check if string matches another within a maximum edit distance
+ *
+ * Uses Levenshtein distance for comparison.
+ *
+ * @param str String to check
+ * @param target Target string to match against
+ * @param max_distance Maximum allowed edit distance
+ * @return true if Levenshtein distance <= max_distance
+ */
+bool fuzzy_match(std::string_view str,
+                 std::string_view target,
+                 size_t max_distance);
+
+// ============================================================================
+// Text Analysis Functions
+// ============================================================================
+
+/**
+ * @brief Count words in a string
+ *
+ * Words are separated by whitespace.
+ *
+ * @param str Input string
+ * @return Number of words
+ */
+size_t word_count(std::string_view str);
+
+/**
+ * @brief Expand tabs to spaces
+ *
+ * @param str Input string
+ * @param tab_width Number of spaces per tab (default: 4)
+ * @return String with tabs expanded
+ */
+std::string expand_tabs(std::string_view str, size_t tab_width = 4);
+
+/**
+ * @brief Normalize line endings to a single style
+ *
+ * Converts all line endings (CR, LF, CRLF) to the specified style.
+ *
+ * @param str Input string
+ * @param ending Line ending to use (default: "\n")
+ * @return String with normalized line endings
+ */
+std::string normalize_line_endings(std::string_view str,
+                                   std::string_view ending = "\n");
+
+/**
+ * @brief Check if string is a palindrome
+ *
+ * Ignores case and non-alphanumeric characters.
+ *
+ * @param str Input string
+ * @return true if string reads the same forwards and backwards
+ *
+ * Examples:
+ *   is_palindrome("radar")              -> true
+ *   is_palindrome("A man a plan Panama") -> true
+ *   is_palindrome("hello")              -> false
+ */
+bool is_palindrome(std::string_view str);
+
+/**
+ * @brief Wrap string in quotes
+ *
+ * @param str Input string
+ * @param quote_char Quote character to use (default: '"')
+ * @return Quoted string
+ */
+std::string quote(std::string_view str, char quote_char = '"');
+
+/**
+ * @brief Remove surrounding quotes from string
+ *
+ * Removes matching quote characters from the start and end.
+ * Supports single quotes ('), double quotes ("), and backticks (`).
+ *
+ * @param str Input string
+ * @return Unquoted string (or original if not quoted)
+ */
+std::string unquote(std::string_view str);
+
 } // namespace fb

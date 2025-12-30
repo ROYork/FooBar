@@ -1,6 +1,37 @@
-# fb::format - C++17 String Formatting
+# fb::format - String Formatting Library
 
-The `fb::format` function provides type-safe string formatting similar to C++20's `std::format`, but compatible with C++17.
+## Overview
+
+The `fb::format` function provides Python/C++20-style string formatting for C++17. It offers a type-safe, readable alternative to `printf` and string streams.
+
+**Key Features:**
+
+- Positional and sequential argument support
+- Type-safe variadic templates
+- Format specifiers (width, alignment, precision, type)
+- Support for integers, floats, strings, booleans, pointers
+- Multiple number bases (decimal, hex, octal, binary)
+- Custom alignment and fill characters
+
+## Quick Start
+
+```cpp
+#include <fb/format.h>
+
+// Simple formatting
+std::string s1 = fb::format("Hello, {}!", "world");
+// Result: "Hello, world!"
+
+// Sequential arguments
+std::string s2 = fb::format("{} + {} = {}", 2, 3, 5);
+// Result: "2 + 3 = 5"
+
+// Format specifiers
+std::string s3 = fb::format("Value: {:05d}", 42);
+// Result: "Value: 00042"
+```
+
+---
 
 ## Table of Contents
 - [Basic Usage](#basic-usage)
@@ -332,3 +363,32 @@ fb::format("{:02}:{:02}:{:02}", 14, 30, 0);    // "14:30:00"
 - For maximum performance in hot paths, consider pre-building strings
 - The implementation avoids heap allocations where possible
 - String results are returned by value (benefits from move semantics)
+
+---
+
+## Comparison with std::format (C++20)
+
+| Feature | fb::format | std::format (C++20) |
+|---------|------------|---------------------|
+| Positional arguments | Yes | Yes |
+| Type safety | Yes (runtime) | Yes (compile-time) |
+| Format specifiers | Yes (most) | Yes (all) |
+| Custom types | Yes | Yes |
+| Compile-time validation | No | Yes |
+| Locale support | No | Yes |
+
+---
+
+## What's NOT Implemented
+
+- **Compile-time format string checking**: Errors detected at runtime
+- **Locale support**: All formatting is locale-independent
+- **Dynamic width/precision from args**: Not supported
+- **Digit grouping**: Thousands separator not supported
+
+---
+
+## See Also
+
+- [string_builder.md](string_builder.md) - Efficient string concatenation
+- [string_utils.md](string_utils.md) - String conversion functions

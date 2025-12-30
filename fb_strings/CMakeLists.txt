@@ -25,6 +25,10 @@ set(FB_STRINGS_SOURCES
   src/string_utils.cpp
   src/string_list.cpp
   src/format.cpp
+  src/string_builder.cpp
+  src/string_hash.cpp
+  src/string_random.cpp
+  src/utf8_utils.cpp
 )
 
 # Create the static library
