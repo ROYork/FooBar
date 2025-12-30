@@ -36,6 +36,7 @@ public:
 
 
   void connect(const socket_address& address);
+  void disconnect();  ///< Disconnect from connected peer (allows receiving from any source)
   int send_bytes(const void* buffer, int length, int flags = 0);
   int receive_bytes(void* buffer, int length, int flags = 0);
   int send(const std::string& message);

@@ -1731,4 +1731,13 @@ void socket_base::cleanup_winsock()
 }
 #endif
 
+/**
+ * @brief Update connection state
+ * @param connected New connection state
+ */
+void socket_base::set_connected(bool connected)
+{
+  m_is_connected = connected;
+}
+
 } // namespace fb

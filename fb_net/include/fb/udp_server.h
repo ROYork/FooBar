@@ -18,11 +18,16 @@ namespace fb {
 
 /**
  * @brief Multi-threaded UDP server implementation.
- * 
+ *
  * The udp_server manages incoming UDP packets using a configurable thread pool.
  * It receives packets on a udp_socket and dispatches them to UDPHandler
  * instances running in worker threads. The server provides packet management,
  * graceful shutdown, and configurable limits.
+ *
+ * @warning Move Operations: The server must be stopped before moving. Moving a running
+ *          server results in undefined behavior because worker threads cannot be
+ *          transferred between instances. Always call stop() before move construction
+ *          or move assignment.
  */
 class udp_server
 {
@@ -68,6 +73,7 @@ public:
 
     void start();
 
+    // Note: timeout is best-effort; stop may block until worker threads exit.
     void stop(const std::chrono::milliseconds& timeout = std::chrono::milliseconds(5000));
 
     bool is_running() const;

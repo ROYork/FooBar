@@ -216,13 +216,21 @@ void udp_server::start()
     // Start receiver thread
     m_receiver_thread = std::thread(&udp_server::receiver_thread_proc, this);
 
-    // Start initial worker threads
-    std::lock_guard<std::mutex> lock(m_threads_mutex);
-    for (std::size_t i = 0; i < std::min(m_max_threads, std::size_t(2)); ++i)
+    // Start initial worker threads (emit signals outside lock)
+    std::vector<std::size_t> created_counts;
     {
-      m_worker_threads.emplace_back(&udp_server::worker_thread_proc, this);
-      if (onWorkerThreadCreated.slot_count() > 0) {
-        onWorkerThreadCreated.emit(m_worker_threads.size());
+      std::lock_guard<std::mutex> lock(m_threads_mutex);
+      for (std::size_t i = 0; i < std::min(m_max_threads, std::size_t(2)); ++i)
+      {
+        m_worker_threads.emplace_back(&udp_server::worker_thread_proc, this);
+        created_counts.push_back(m_worker_threads.size());
+      }
+    }
+    if (onWorkerThreadCreated.slot_count() > 0)
+    {
+      for (auto count : created_counts)
+      {
+        onWorkerThreadCreated.emit(count);
       }
     }
 
@@ -563,15 +571,15 @@ void udp_server::receiver_thread_proc()
     {
       socket_address sender_address;
 
-      // Set short timeout for receive to allow checking stop condition
-      auto old_timeout = m_server_socket.get_receive_timeout();
-      m_server_socket.set_receive_timeout(std::chrono::milliseconds(1000));
+      // Poll for readability so we can check stop condition without
+      // mutating socket timeouts configured by the caller.
+      if (!m_server_socket.poll_read(std::chrono::milliseconds(1000)))
+      {
+        continue;
+      }
 
       int received = m_server_socket.receive_from(
           buffer.data(), static_cast<int>(buffer.size()), sender_address);
-
-      // Restore original timeout
-      m_server_socket.set_receive_timeout(old_timeout);
 
       if (m_should_stop.load())
       {
@@ -580,41 +588,55 @@ void udp_server::receiver_thread_proc()
 
       if (received > 0)
       {
-        // Emit packet received signal
+        // Increment total_packets for ALL received packets (including dropped ones)
+        auto total_count = m_total_packets.fetch_add(1) + 1;
+
+        // Emit packet received signal (outside any locks)
         if (onPacketReceived.slot_count() > 0) {
           onPacketReceived.emit(buffer.data(), static_cast<std::size_t>(received), sender_address);
+        }
+        if (onTotalPacketsChanged.slot_count() > 0) {
+          onTotalPacketsChanged.emit(total_count);
         }
 
         // Create packet data
         auto packet_data = std::make_unique<PacketData>(
             buffer.data(), static_cast<std::size_t>(received), sender_address);
 
-        // Queue packet for processing
+        // Queue packet for processing - signals emitted outside lock to avoid deadlock
+        bool packet_dropped = false;
+        std::size_t queue_size = 0;
         {
           std::lock_guard<std::mutex> lock(m_queue_mutex);
           if (m_packet_queue.size() >= m_max_queued)
           {
             // Queue is full, drop packet
-            auto dropped_count = m_dropped_packets.fetch_add(1) + 1;
-            if (onDroppedPacketsChanged.slot_count() > 0) {
-              onDroppedPacketsChanged.emit(dropped_count);
-            }
-            continue;
+            m_dropped_packets.fetch_add(1);
+            packet_dropped = true;
           }
-          m_packet_queue.push(std::move(packet_data));
-          if (onQueuedPacketsChanged.slot_count() > 0) {
-            onQueuedPacketsChanged.emit(m_packet_queue.size());
+          else
+          {
+            m_packet_queue.push(std::move(packet_data));
+            queue_size = m_packet_queue.size();
           }
+        }
+
+        // Emit signals outside the lock to prevent re-entrancy deadlock
+        if (packet_dropped)
+        {
+          if (onDroppedPacketsChanged.slot_count() > 0) {
+            onDroppedPacketsChanged.emit(m_dropped_packets.load());
+          }
+          continue;
+        }
+
+        if (onQueuedPacketsChanged.slot_count() > 0) {
+          onQueuedPacketsChanged.emit(queue_size);
         }
 
         // Notify worker threads and possibly add more threads
         m_queue_condition.notify_one();
         add_worker_thread_if_needed();
-
-        auto total_count = m_total_packets.fetch_add(1) + 1;
-        if (onTotalPacketsChanged.slot_count() > 0) {
-          onTotalPacketsChanged.emit(total_count);
-        }
       }
     }
     catch (const std::system_error &ex)
@@ -791,19 +813,31 @@ void udp_server::cleanup_expired_packets()
  */
 void udp_server::add_worker_thread_if_needed()
 {
-  std::lock_guard<std::mutex> threads_lock(m_threads_mutex);
-  std::lock_guard<std::mutex> queue_lock(m_queue_mutex);
+  bool thread_added = false;
+  std::size_t thread_count = 0;
 
-  // Add thread if queue is getting full and we haven't reached max threads
-  if (m_packet_queue.size() > m_worker_threads.size() &&
-      m_worker_threads.size() < m_max_threads)
+  // Use scoped_lock for deadlock-safe acquisition of multiple mutexes
   {
-    m_worker_threads.emplace_back(&udp_server::worker_thread_proc, this);
+    std::scoped_lock lock(m_threads_mutex, m_queue_mutex);
+
+    // Add thread if queue is getting full and we haven't reached max threads
+    if (m_packet_queue.size() > m_worker_threads.size() &&
+        m_worker_threads.size() < m_max_threads)
+    {
+      m_worker_threads.emplace_back(&udp_server::worker_thread_proc, this);
+      thread_added = true;
+      thread_count = m_worker_threads.size();
+    }
+  }
+
+  // Emit signals outside the lock to prevent re-entrancy deadlock
+  if (thread_added)
+  {
     if (onWorkerThreadCreated.slot_count() > 0) {
-      onWorkerThreadCreated.emit(m_worker_threads.size());
+      onWorkerThreadCreated.emit(thread_count);
     }
     if (onActiveThreadsChanged.slot_count() > 0) {
-      onActiveThreadsChanged.emit(m_worker_threads.size());
+      onActiveThreadsChanged.emit(thread_count);
     }
   }
 }
@@ -839,7 +873,7 @@ void udp_server::validate_configuration() const
  */
 void udp_server::shutdown_threads(const std::chrono::milliseconds &timeout)
 {
-  auto deadline = std::chrono::steady_clock::now() + timeout;
+  (void)timeout; // Timeout used to signal urgency, but we always join to avoid use-after-free
 
   // Join receiver thread
   if (m_receiver_thread.joinable())
@@ -847,24 +881,15 @@ void udp_server::shutdown_threads(const std::chrono::milliseconds &timeout)
     m_receiver_thread.join();
   }
 
-  // Join worker threads
+  // Join worker threads - always join to prevent use-after-free from detached
+  // threads accessing destroyed server object
   {
     std::lock_guard<std::mutex> lock(m_threads_mutex);
     for (auto &thread : m_worker_threads)
     {
       if (thread.joinable())
       {
-        // Calculate remaining time
-        auto now = std::chrono::steady_clock::now();
-        if (now < deadline)
-        {
-          thread.join();
-        }
-        else
-        {
-          // Force detach if timeout exceeded
-          thread.detach();
-        }
+        thread.join();
       }
     }
     m_worker_threads.clear();

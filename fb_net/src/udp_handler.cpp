@@ -23,7 +23,7 @@ udp_handler::udp_handler() :
   m_bytes_processed(0),
   m_error_count(0),
   m_creation_time(std::chrono::steady_clock::now()),
-  m_last_packet_time(m_creation_time)
+  m_last_packet_time_rep(m_creation_time.time_since_epoch().count())
 {
 }
 
@@ -151,7 +151,7 @@ bool udp_handler::can_handle_address(const socket_address &sender_address) const
  */
 std::uint64_t udp_handler::packets_processed() const
 {
-  return m_packets_processed;
+  return m_packets_processed.load(std::memory_order_relaxed);
 }
 
 /**
@@ -159,7 +159,7 @@ std::uint64_t udp_handler::packets_processed() const
  */
 std::uint64_t udp_handler::bytes_processed() const
 {
-  return m_bytes_processed;
+  return m_bytes_processed.load(std::memory_order_relaxed);
 }
 
 /**
@@ -167,7 +167,7 @@ std::uint64_t udp_handler::bytes_processed() const
  */
 std::uint64_t udp_handler::error_count() const
 {
-  return m_error_count;
+  return m_error_count.load(std::memory_order_relaxed);
 }
 
 /**
@@ -183,7 +183,9 @@ std::chrono::steady_clock::time_point udp_handler::creation_time() const
  */
 std::chrono::steady_clock::time_point udp_handler::last_packet_time() const
 {
-  return m_last_packet_time;
+  auto rep = m_last_packet_time_rep.load(std::memory_order_relaxed);
+  return std::chrono::steady_clock::time_point(
+      std::chrono::steady_clock::duration(rep));
 }
 
 /**
@@ -191,11 +193,12 @@ std::chrono::steady_clock::time_point udp_handler::last_packet_time() const
  */
 void udp_handler::reset_statistics()
 {
-  m_packets_processed = 0;
-  m_bytes_processed   = 0;
-  m_error_count       = 0;
-  m_creation_time     = std::chrono::steady_clock::now();
-  m_last_packet_time  = m_creation_time;
+  m_packets_processed.store(0, std::memory_order_relaxed);
+  m_bytes_processed.store(0, std::memory_order_relaxed);
+  m_error_count.store(0, std::memory_order_relaxed);
+  m_creation_time = std::chrono::steady_clock::now();
+  m_last_packet_time_rep.store(m_creation_time.time_since_epoch().count(),
+                               std::memory_order_relaxed);
 }
 
 /**
@@ -284,15 +287,17 @@ void udp_handler::update_statistics(std::size_t length, bool success)
 {
   if (success)
   {
-    ++m_packets_processed;
-    m_bytes_processed += length;
+    m_packets_processed.fetch_add(1, std::memory_order_relaxed);
+    m_bytes_processed.fetch_add(length, std::memory_order_relaxed);
   }
   else
   {
-    ++m_error_count;
+    m_error_count.fetch_add(1, std::memory_order_relaxed);
   }
 
-  m_last_packet_time = std::chrono::steady_clock::now();
+  auto now = std::chrono::steady_clock::now();
+  m_last_packet_time_rep.store(now.time_since_epoch().count(),
+                               std::memory_order_relaxed);
 }
 
 } // namespace fb

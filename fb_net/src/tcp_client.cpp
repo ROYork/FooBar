@@ -159,8 +159,14 @@ void tcp_client::connect_non_blocking(const socket_address &address)
 
   try
   {
-    // Attempt connection - will return immediately
-    connect(address);
+    // Call socket_base::connect directly to avoid emitting false error signals
+    // for expected EINPROGRESS/EWOULDBLOCK conditions
+    socket_base::connect(address);
+    // If we get here, connection completed immediately
+    if (onConnected.slot_count() > 0)
+    {
+      onConnected.emit(address);
+    }
   }
   catch (const std::system_error &ex)
   {
@@ -169,7 +175,13 @@ void tcp_client::connect_non_blocking(const socket_address &address)
         code == std::make_error_code(std::errc::operation_would_block))
     {
       // Expected for non-blocking connect - connection still pending.
+      // Do NOT emit onConnectionError as this is normal behavior.
       return;
+    }
+    // Real error - emit signal and rethrow
+    if (onConnectionError.slot_count() > 0)
+    {
+      onConnectionError.emit(ex.what());
     }
     throw;
   }
@@ -258,7 +270,8 @@ int tcp_client::receive_bytes(void *buffer, int length, int flags)
   }
   else if (received == 0)
   {
-    // Connection closed by peer - emit disconnected signal
+    // Connection closed by peer - update state and emit disconnected signal
+    set_connected(false);
     if (onDisconnected.slot_count() > 0)
     {
       onDisconnected.emit();

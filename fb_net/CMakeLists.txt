@@ -205,22 +205,6 @@ if(FB_NET_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
-# Additional test executables
-option(FB_NET_BUILD_INTEGRATION_TESTS "Build integration and validation tests" ON)
-
-   
- # Add to test suite
-if(FB_NET_BUILD_TESTS)
-  add_test(NAME integration_tests COMMAND test_integration)
-  add_test(NAME legacy_compatibility COMMAND test_legacy_compat)
-  add_test(NAME memory_validation COMMAND test_memory_validation)
-        
-  set_tests_properties(integration_tests legacy_compatibility memory_validation PROPERTIES
-       TIMEOUT 300
-  )
-endif()
-
-
 # Print configuration summary
 message(STATUS "")
 message(STATUS "FB_NET Configuration Summary:")

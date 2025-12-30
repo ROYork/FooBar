@@ -81,6 +81,42 @@ TEST_F(UDPServerTest, StartAndStop) {
     EXPECT_FALSE(server.is_running());
 }
 
+TEST_F(UDPServerTest, WorkerThreadCreatedSignalReentrantSafe) {
+    udp_socket server_sock(socket_address::Family::IPv4);
+    server_sock.bind(socket_address("127.0.0.1", 0));
+
+    auto handler = std::make_shared<CounterHandler>();
+
+    udp_server server(std::move(server_sock), handler, 2);
+
+    std::atomic<bool> callback_ran(false);
+    server.onWorkerThreadCreated.connect([&](std::size_t) {
+        // Re-enter server API while signal fires to validate no lock deadlock.
+        (void)server.thread_count();
+        callback_ran = true;
+    });
+
+    server.start();
+    EXPECT_TRUE(callback_ran.load());
+    server.stop();
+}
+TEST_F(UDPServerTest, ReceiveTimeoutPreserved) {
+    udp_socket server_sock(socket_address::Family::IPv4);
+    server_sock.bind(socket_address("127.0.0.1", 0));
+    server_sock.set_receive_timeout(std::chrono::milliseconds(3500));
+
+    auto handler = std::make_shared<CounterHandler>();
+    udp_server server(std::move(server_sock), handler);
+
+    server.start();
+
+    auto &sock = const_cast<udp_socket &>(server.server_socket());
+    auto timeout = sock.get_receive_timeout();
+    EXPECT_GE(timeout, std::chrono::milliseconds(3000));
+
+    server.stop();
+}
+
 TEST_F(UDPServerTest, EchoFunctionality) {
     // Create echo server
     udp_socket server_sock(socket_address::Family::IPv4);
@@ -310,4 +346,86 @@ TEST_F(UDPServerTest, GracefulShutdown) {
     EXPECT_FALSE(server.is_running());
     // Should have stopped in reasonable time
     EXPECT_LT(duration, std::chrono::seconds(6));
+}
+
+// ============================================================================
+// Edge Case Tests
+// ============================================================================
+
+TEST_F(UDPServerTest, IPv6Server) {
+    // Test UDP server with IPv6
+    udp_socket server_sock(socket_address::Family::IPv6);
+    server_sock.bind(socket_address("::1", 0));
+    socket_address server_addr = server_sock.address();
+
+    auto handler = std::make_shared<CounterHandler>();
+    CounterHandler::packet_count = 0;
+
+    udp_server server(std::move(server_sock), handler);
+    server.start();
+
+    // Send packets via IPv6
+    udp_socket client_sock(socket_address::Family::IPv6);
+    for (int i = 0; i < 5; ++i) {
+        client_sock.send_to("IPv6 test", 9, server_addr);
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+    EXPECT_GE(CounterHandler::packet_count.load(), 1);
+
+    server.stop();
+}
+
+TEST_F(UDPServerTest, MoveStoppedServer) {
+    // Test that moving a stopped server works correctly
+    udp_socket server_sock(socket_address::Family::IPv4);
+    server_sock.bind(socket_address("127.0.0.1", 0));
+
+    auto handler = std::make_shared<CounterHandler>();
+
+    udp_server server1(std::move(server_sock), handler);
+
+    // Server is not running - should be safe to move
+    EXPECT_FALSE(server1.is_running());
+
+    udp_server server2(std::move(server1));
+    EXPECT_FALSE(server2.is_running());
+
+    // Moved-to server should work correctly
+    server2.start();
+    EXPECT_TRUE(server2.is_running());
+    server2.stop();
+    EXPECT_FALSE(server2.is_running());
+}
+
+TEST_F(UDPServerTest, MaxPacketSize) {
+    // Test handling of large packets - uses string interface like other working tests
+    udp_socket server_sock(socket_address::Family::IPv4);
+    server_sock.bind(socket_address("127.0.0.1", 0));
+    socket_address server_addr = server_sock.address();
+
+    // Explicitly reset counter for test isolation (consistent with other tests)
+    CounterHandler::packet_count = 0;
+    auto handler = std::make_shared<CounterHandler>();
+
+    udp_server server(std::move(server_sock), handler);
+    server.start();
+
+    std::uint64_t initial_total = server.total_packets();
+
+    // Send larger packets using string interface (consistent with working tests)
+    udp_client client;
+    std::string large_message(4096, 'X');  // 4KB message
+    for (int i = 0; i < 5; ++i) {
+        client.send_to(large_message, server_addr);
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+    // Verify packets were received and processed
+    EXPECT_GE(server.total_packets(), initial_total + 5);
+    EXPECT_GE(CounterHandler::packet_count.load(), 5);
+
+    server.stop();
 }

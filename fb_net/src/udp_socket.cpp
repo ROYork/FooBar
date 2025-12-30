@@ -225,6 +225,32 @@ void udp_socket::connect(const socket_address &address)
 }
 
 /**
+ * @brief Disconnect from connected peer
+ *
+ * This removes the peer address filter so the socket can receive from any source.
+ * On POSIX systems, this is done by connecting to AF_UNSPEC.
+ */
+void udp_socket::disconnect()
+{
+  if (!m_is_connected)
+  {
+    return;  // Already disconnected
+  }
+
+#ifdef _WIN32
+  sockaddr_in unspec_addr{};
+  unspec_addr.sin_family = AF_UNSPEC;
+  ::connect(sockfd(), reinterpret_cast<sockaddr*>(&unspec_addr), sizeof(unspec_addr));
+#else
+  sockaddr unspec_addr{};
+  unspec_addr.sa_family = AF_UNSPEC;
+  ::connect(sockfd(), &unspec_addr, sizeof(unspec_addr));
+#endif
+
+  m_is_connected = false;
+}
+
+/**
  * @brief Send data to connected address
  * @param buffer Pointer to data buffer
  * @param length Number of bytes to send

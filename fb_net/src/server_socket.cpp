@@ -111,14 +111,7 @@ server_socket &server_socket::operator=(server_socket &&other) noexcept
  */
 void server_socket::bind(const socket_address &address, bool reuse_address)
 {
-  try
-  {
-    socket_base::bind(address, reuse_address);
-  }
-  catch (const std::exception &)
-  {
-    throw;
-  }
+  socket_base::bind(address, reuse_address);
 }
 
 /**
@@ -132,14 +125,7 @@ void server_socket::bind(const socket_address &address,
                          bool reuse_address,
                          bool reuse_port)
 {
-  try
-  {
-    socket_base::bind(address, reuse_address, reuse_port);
-  }
-  catch (const std::exception &)
-  {
-    throw;
-  }
+  socket_base::bind(address, reuse_address, reuse_port);
 }
 
 /**
@@ -154,14 +140,7 @@ void server_socket::listen(int backlog)
     m_backlog = std::min(backlog, MAX_BACKLOG);
   }
 
-  try
-  {
-    socket_base::listen(m_backlog);
-  }
-  catch (const std::exception &)
-  {
-    throw;
-  }
+  socket_base::listen(m_backlog);
 }
 
 /**
@@ -357,14 +336,7 @@ int server_socket::queue_size() const
  */
 void server_socket::init_server_socket(socket_address::Family family)
 {
-  try
-  {
-    init(family, STREAM_SOCKET);
-  }
-  catch (const std::exception &)
-  {
-    throw;
-  }
+  init(family, STREAM_SOCKET);
 }
 
 /**

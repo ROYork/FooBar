@@ -341,3 +341,62 @@ TEST_F(TCPServerTest, GracefulShutdown) {
     // Should have stopped in reasonable time
     EXPECT_LT(duration, std::chrono::seconds(6));
 }
+
+// ============================================================================
+// Edge Case Tests
+// ============================================================================
+
+TEST_F(TCPServerTest, IPv6Server) {
+    // Test TCP server with IPv6
+    server_socket server_sock(socket_address::Family::IPv6);
+    server_sock.bind(socket_address("::1", 0));
+    socket_address server_addr = server_sock.address();
+    server_sock.listen();
+
+    auto factory = [](tcp_client socket, const socket_address& addr) {
+        return std::make_unique<EchoConnection>(std::move(socket), addr);
+    };
+
+    tcp_server server(std::move(server_sock), factory);
+    server.start();
+
+    // Connect IPv6 client
+    tcp_client client(socket_address::Family::IPv6);
+    client.connect(server_addr, std::chrono::seconds(2));
+
+    std::string test_message = "IPv6 test";
+    client.send(test_message);
+
+    std::string response;
+    client.receive(response, 1024);
+
+    EXPECT_EQ(response, test_message);
+
+    client.close();
+    server.stop();
+}
+
+TEST_F(TCPServerTest, MoveStoppedServer) {
+    // Test that moving a stopped server works correctly
+    server_socket server_sock(socket_address::Family::IPv4);
+    server_sock.bind(socket_address("127.0.0.1", 0));
+    server_sock.listen();
+
+    auto factory = [](tcp_client socket, const socket_address& addr) {
+        return std::make_unique<EchoConnection>(std::move(socket), addr);
+    };
+
+    tcp_server server1(std::move(server_sock), factory);
+
+    // Server is not running - should be safe to move
+    EXPECT_FALSE(server1.is_running());
+
+    tcp_server server2(std::move(server1));
+    EXPECT_FALSE(server2.is_running());
+
+    // Moved-to server should work correctly
+    server2.start();
+    EXPECT_TRUE(server2.is_running());
+    server2.stop();
+    EXPECT_FALSE(server2.is_running());
+}

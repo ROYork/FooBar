@@ -139,6 +139,9 @@ void udp_client::disconnect()
 {
   if (m_is_connected)
   {
+    // Disconnect at OS level - removes peer address filter
+    m_socket.disconnect();
+
     m_is_connected   = false;
     m_remote_address = socket_address();
 
@@ -148,9 +151,6 @@ void udp_client::disconnect()
       onDisconnected.emit();
     }
   }
-
-  // Note: UDP "disconnect" doesn't close socket, just clears default
-  // destination
 }
 
 /**

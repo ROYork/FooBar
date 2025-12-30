@@ -463,6 +463,12 @@ void socket_address::parse_host_and_port(std::string_view host_and_port,
                                          std::string &host,
                                          std::uint16_t &port)
 {
+  // Check for empty input to avoid UB on front()
+  if (host_and_port.empty())
+  {
+    throw std::invalid_argument("Empty host:port string");
+  }
+
   // Handle IPv6 addresses in brackets [host]:port
   if (host_and_port.front() == '[')
   {

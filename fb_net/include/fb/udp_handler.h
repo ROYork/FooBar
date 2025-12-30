@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <fb/socket_address.h>
 #include <memory>
@@ -22,14 +23,11 @@ public:
 
   udp_handler();
 
-  /// @brief Copy constructor (disabled - handlers are not copyable)
-
-  udp_handler(const udp_handler &)           = delete;
-  udp_handler(udp_handler && other) noexcept = default;
-
-  ///@brief Copy assignment operator (disabled - handlers are not copyable)
-  udp_handler & operator=(const udp_handler &)           = delete;
-  udp_handler & operator=(udp_handler && other) noexcept = default;
+  /// @brief Copy/move operations disabled - handlers manage per-instance statistics
+  udp_handler(const udp_handler &)            = delete;
+  udp_handler(udp_handler &&)                 = delete;
+  udp_handler & operator=(const udp_handler &) = delete;
+  udp_handler & operator=(udp_handler &&)      = delete;
 
   virtual ~udp_handler()                                 = default;
 
@@ -72,11 +70,12 @@ protected:
                                const socket_address & sender_address) const;
 
 private:
-  std::uint64_t m_packets_processed{0};                     ///< Number of packets processed
-  std::uint64_t m_bytes_processed{0};                       ///< Number of bytes processed
-  std::uint64_t m_error_count{0};                           ///< Number of errors encountered
+  // Statistics are atomic to support shared handlers called from multiple worker threads
+  std::atomic<std::uint64_t> m_packets_processed{0};        ///< Number of packets processed
+  std::atomic<std::uint64_t> m_bytes_processed{0};          ///< Number of bytes processed
+  std::atomic<std::uint64_t> m_error_count{0};              ///< Number of errors encountered
   std::chrono::steady_clock::time_point m_creation_time;    ///< Handler creation time
-  std::chrono::steady_clock::time_point m_last_packet_time; ///< Last packet processing time
+  std::atomic<std::chrono::steady_clock::time_point::rep> m_last_packet_time_rep; ///< Last packet processing time (atomic rep)
 
   void initialize();
   void update_statistics(std::size_t length, bool success);

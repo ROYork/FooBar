@@ -23,6 +23,11 @@ namespace fb {
  * The server owns a listening `server_socket`, accepts clients, and hands them off to
  * `tcp_server_connection` handlers managed by a small worker pool. It tracks connections,
  * manages graceful shutdown, and exposes basic runtime statistics.
+ *
+ * @warning Move Operations: The server must be stopped before moving. Moving a running
+ *          server results in undefined behavior because worker threads cannot be
+ *          transferred between instances. Always call stop() before move construction
+ *          or move assignment.
  */
 class tcp_server
 {
@@ -51,6 +56,7 @@ public:
     // Server lifecycle management
 
     void start();
+    // Note: timeout is best-effort; stop may block until worker threads exit.
     void stop(const std::chrono::milliseconds& timeout = std::chrono::milliseconds(5000));
     bool is_running() const;
 

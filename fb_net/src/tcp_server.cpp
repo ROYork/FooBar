@@ -641,8 +641,8 @@ void tcp_server::cleanup_connections()
  */
 void tcp_server::add_worker_thread_if_needed()
 {
-  std::lock_guard<std::mutex> threads_lock(m_threads_mutex);
-  std::lock_guard<std::mutex> queue_lock(m_queue_mutex);
+  // Use scoped_lock for deadlock-safe acquisition of multiple mutexes
+  std::scoped_lock lock(m_threads_mutex, m_queue_mutex);
 
   // Add thread if queue is getting full and we haven't reached max threads
   if (m_connection_queue.size() > m_worker_threads.size() &&
@@ -683,7 +683,7 @@ void tcp_server::validate_configuration() const
  */
 void tcp_server::shutdown_threads(const std::chrono::milliseconds &timeout)
 {
-  auto deadline = std::chrono::steady_clock::now() + timeout;
+  (void)timeout; // Timeout used to signal urgency, but we always join to avoid use-after-free
 
   // Signal active connections to stop before joining worker threads so they
   // can exit promptly.
@@ -704,24 +704,15 @@ void tcp_server::shutdown_threads(const std::chrono::milliseconds &timeout)
     m_acceptor_thread.join();
   }
 
-  // Join worker threads
+  // Join worker threads - always join to prevent use-after-free from detached
+  // threads accessing destroyed server object
   {
     std::lock_guard<std::mutex> lock(m_threads_mutex);
     for (auto &thread : m_worker_threads)
     {
       if (thread.joinable())
       {
-        // Calculate remaining time
-        auto now = std::chrono::steady_clock::now();
-        if (now < deadline)
-        {
-          thread.join();
-        }
-        else
-        {
-          // Force detach if timeout exceeded
-          thread.detach();
-        }
+        thread.join();
       }
     }
     m_worker_threads.clear();

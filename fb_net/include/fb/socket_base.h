@@ -151,6 +151,7 @@ protected:
   void reset(socket_t fd = INVALID_SOCKET_VALUE);
   void ioctl(unsigned long request, int& arg);
   void ioctl(unsigned long request, void* arg);
+  void set_connected(bool connected);  ///< Update connection state (for derived classes)
 
 private:
 
