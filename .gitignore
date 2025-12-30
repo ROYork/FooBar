@@ -54,3 +54,5 @@ build_*/
 *.user
 *.user.*
 
+.cache/
+String_Utils_Selected_Leveled/

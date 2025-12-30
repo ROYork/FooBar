@@ -391,3 +391,11 @@ public:
 fb::connection conn = observable.on_change.connect([](int) {});
 // After observable is destroyed: conn.connected() == false
 ```
+
+---
+
+## See Also
+
+- [index.md](index.md) - Library overview
+- [design.md](design.md) - Design decisions
+- [caveats.md](caveats.md) - Gotchas and best practices

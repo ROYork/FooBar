@@ -37,6 +37,7 @@ set(FB_CORE_TEST_SOURCES
     test_stop_watch.cpp
     test_timer.cpp
     test_circular_buffer.cpp
+    test_csv_parser.cpp
 )
 
 add_executable(fb_core_unit_tests ${FB_CORE_TEST_SOURCES})

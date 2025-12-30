@@ -1,6 +1,45 @@
-# String Utilities API Reference
+# String Utils - Core String Manipulation
 
-This document describes the string utility functions in the `fb` namespace.
+## Overview
+
+The `string_utils.h` module provides 60+ QString-inspired string manipulation functions operating on `std::string` and `std::string_view`. All functions are in the `fb` namespace with consistent, intuitive APIs.
+
+**Key Features:**
+
+- Case conversion and checking
+- Trimming and padding
+- Searching and pattern matching
+- Replacement and transformation
+- Substring extraction
+- Comparison (including natural sort)
+- Type conversion and parsing
+- Encoding/decoding (URL, HTML, Base64, JSON)
+
+## Quick Start
+
+```cpp
+#include <fb/string_utils.h>
+
+using namespace fb;
+
+// Case conversion
+std::string upper = to_upper("hello");        // "HELLO"
+std::string title = title_case("hello");      // "Hello"
+
+// Trimming
+std::string clean = trim("  hello  ");        // "hello"
+
+// Searching
+bool found = contains("hello world", "world"); // true
+
+// Replacement
+std::string s = replace_all("hello", "l", "x"); // "hexxo"
+
+// Conversion
+auto n = to_int("42");                         // std::optional<int>(42)
+```
+
+---
 
 ## Table of Contents
 - [Trimming Functions](#trimming-functions)
@@ -472,3 +511,36 @@ Calculate edit distance between strings.
 ```cpp
 fb::levenshtein_distance("kitten", "sitting");  // 3
 ```
+
+---
+
+## Comparison with std Library
+
+| Feature | fb_strings | C++17 std | C++20 std |
+|---------|------------|-----------|-----------|
+| `starts_with()` | Yes | No | Yes |
+| `ends_with()` | Yes | No | Yes |
+| `contains()` | Yes | No | Yes |
+| `to_upper()` / `to_lower()` | Yes | No | No |
+| `trim()` | Yes | No | No |
+| `split()` | Yes | No | No |
+| `natural_compare()` | Yes | No | No |
+| Pattern matching (wildcard) | Yes | No | No |
+
+---
+
+## What's NOT Implemented
+
+- **Locale-aware case conversion**: Only ASCII is supported
+- **Regular expressions**: Use `std::regex` for regex operations
+- **Unicode normalization**: Full Unicode requires ICU library
+- **In-place modifications**: All functions return new strings
+
+---
+
+## See Also
+
+- [string_list.md](string_list.md) - String container with filtering/sorting
+- [format.md](format.md) - String formatting
+- [utf8_utils.md](utf8_utils.md) - UTF-8 code point operations
+- [encoding.md](encoding.md) - URL/HTML encoding details
