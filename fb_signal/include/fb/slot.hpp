@@ -7,6 +7,7 @@
 /// ~6 captured pointers) while supporting arbitrary callable types.
 
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <memory>

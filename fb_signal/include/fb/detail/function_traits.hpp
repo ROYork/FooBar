@@ -3,6 +3,7 @@
 /// @file detail/function_traits.hpp
 /// @brief Type traits for callable analysis
 
+#include <cstddef>
 #include <functional>
 #include <type_traits>
 
