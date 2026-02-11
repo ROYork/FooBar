@@ -321,35 +321,35 @@ TEST(CSVParserTest, RowIndexOutOfRange)
 {
   auto parser = make_parser("A\n1\n", {});
 
-  EXPECT_THROW(parser.get_row(5), std::out_of_range);
+  EXPECT_THROW(static_cast<void>(parser.get_row(5)), std::out_of_range);
 }
 
 TEST(CSVParserTest, ColumnIndexOutOfRange)
 {
   auto parser = make_parser("A,B\n1,2\n", {});
 
-  EXPECT_THROW(parser.get_column(10), std::out_of_range);
+  EXPECT_THROW(static_cast<void>(parser.get_column(10)), std::out_of_range);
 }
 
 TEST(CSVParserTest, CellRowIndexOutOfRange)
 {
   auto parser = make_parser("A\n1\n", {});
 
-  EXPECT_THROW(parser.get_cell(10, 0), std::out_of_range);
+  EXPECT_THROW(static_cast<void>(parser.get_cell(10, 0)), std::out_of_range);
 }
 
 TEST(CSVParserTest, CellColumnIndexOutOfRange)
 {
   auto parser = make_parser("A\n1\n", {});
 
-  EXPECT_THROW(parser.get_cell(0, 10), std::out_of_range);
+  EXPECT_THROW(static_cast<void>(parser.get_cell(0, 10)), std::out_of_range);
 }
 
 TEST(CSVParserTest, InvalidHeaderName)
 {
   auto parser = make_parser("Name,Age\nAlice,30\n", {});
 
-  EXPECT_THROW(parser.get_column("NonExistent"), std::invalid_argument);
+  EXPECT_THROW(static_cast<void>(parser.get_column("NonExistent")), std::invalid_argument);
 }
 
 TEST(CSVParserTest, HeaderAccessWhenDisabled)
@@ -359,7 +359,7 @@ TEST(CSVParserTest, HeaderAccessWhenDisabled)
 
   auto parser = make_parser("A,B\n1,2\n", config);
 
-  EXPECT_THROW(parser.get_column("A"), std::invalid_argument);
+  EXPECT_THROW(static_cast<void>(parser.get_column("A")), std::invalid_argument);
 }
 
 TEST(CSVParserTest, UnclosedQuote)
@@ -667,7 +667,7 @@ TEST(CSVParserTest, TV001_EmptyFile)
 
   EXPECT_EQ(parser.row_count(), 0u);
   EXPECT_EQ(parser.column_count(), 0u);
-  EXPECT_THROW(parser.get_row(0), std::out_of_range);
+  EXPECT_THROW(static_cast<void>(parser.get_row(0)), std::out_of_range);
 }
 
 TEST(CSVParserTest, TV002_HeaderOnly)
