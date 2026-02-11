@@ -354,10 +354,10 @@ auto timer = Timer::singleShot(5000, []() {
 
 #### timeout
 ```cpp
-Signal<> timeout;
+fb::signal<> timeout;
 ```
 
-Signal emitted when timer expires.
+fb::signal emitted when timer expires.
 
 **Usage**:
 ```cpp

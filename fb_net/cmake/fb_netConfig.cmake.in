@@ -1,0 +1,15 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Find required dependencies
+if(WIN32)
+    # No additional dependencies on Windows (ws2_32 and mswsock are system libraries)
+else()
+    find_dependency(Threads)
+endif()
+
+# Include the targets file
+include("${CMAKE_CURRENT_LIST_DIR}/fb_netTargets.cmake")
+
+check_required_components(fb_net)
