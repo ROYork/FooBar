@@ -101,6 +101,22 @@ TEST_F(udp_socketTest, ConnectedMode) {
     EXPECT_EQ(received, test_message);
 }
 
+TEST_F(udp_socketTest, DisconnectClearsDerivedAndBaseConnectionState) {
+    udp_socket socket1(socket_address::Family::IPv4);
+    udp_socket socket2(socket_address::Family::IPv4);
+
+    socket1.bind(socket_address("127.0.0.1", 0));
+    socket2.bind(socket_address("127.0.0.1", 0));
+
+    socket1.connect(socket2.address());
+    EXPECT_TRUE(socket1.is_connected());
+    EXPECT_TRUE(static_cast<const socket_base&>(socket1).is_connected());
+
+    socket1.disconnect();
+    EXPECT_FALSE(socket1.is_connected());
+    EXPECT_FALSE(static_cast<const socket_base&>(socket1).is_connected());
+}
+
 TEST_F(udp_socketTest, Broadcast) {
     udp_socket sender(socket_address::Family::IPv4);
 

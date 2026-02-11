@@ -237,17 +237,30 @@ void udp_socket::disconnect()
     return;  // Already disconnected
   }
 
+  int result = 0;
 #ifdef _WIN32
   sockaddr_in unspec_addr{};
   unspec_addr.sin_family = AF_UNSPEC;
-  ::connect(sockfd(), reinterpret_cast<sockaddr*>(&unspec_addr), sizeof(unspec_addr));
+  result = ::connect(sockfd(), reinterpret_cast<sockaddr*>(&unspec_addr), sizeof(unspec_addr));
 #else
   sockaddr unspec_addr{};
   unspec_addr.sa_family = AF_UNSPEC;
-  ::connect(sockfd(), &unspec_addr, sizeof(unspec_addr));
+  result = ::connect(sockfd(), &unspec_addr, sizeof(unspec_addr));
 #endif
 
+  if (result != 0)
+  {
+    // macOS/BSD returns EAFNOSUPPORT for AF_UNSPEC connect on UDP sockets,
+    // but the peer disassociation succeeds regardless
+    int err = last_error();
+    if (err != EAFNOSUPPORT)
+    {
+      error("disconnect");
+    }
+  }
+
   m_is_connected = false;
+  set_connected(false);
 }
 
 /**
