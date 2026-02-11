@@ -135,7 +135,7 @@ TEST(CSVParserTest, GetHeaders)
 
 TEST(CSVParserTest, QuotedFieldsWithCommas)
 {
-  auto parser = make_parser("Name,Location\n\"Smith, John\",NYC\n", {.has_headers = true});
+  auto parser = make_parser("Name,Location\n\"Smith, John\",NYC\n", {});
 
   EXPECT_EQ(parser.get_cell(0, "Name"), "Smith, John");
   EXPECT_EQ(parser.get_cell(0, "Location"), "NYC");
@@ -143,21 +143,21 @@ TEST(CSVParserTest, QuotedFieldsWithCommas)
 
 TEST(CSVParserTest, QuotedFieldsWithQuotes)
 {
-  auto parser = make_parser("Name,Quote\nAlice,\"He said \"\"Hello\"\"\"\n", {.has_headers = true});
+  auto parser = make_parser("Name,Quote\nAlice,\"He said \"\"Hello\"\"\"\n", {});
 
   EXPECT_EQ(parser.get_cell(0, "Quote"), "He said \"Hello\"");
 }
 
 TEST(CSVParserTest, MultiLineFields)
 {
-  auto parser = make_parser("Name,Bio\nAlice,\"Line1\nLine2\nLine3\"\n", {.has_headers = true});
+  auto parser = make_parser("Name,Bio\nAlice,\"Line1\nLine2\nLine3\"\n", {});
 
   EXPECT_EQ(parser.get_cell(0, "Bio"), "Line1\nLine2\nLine3");
 }
 
 TEST(CSVParserTest, CRLFLineEndings)
 {
-  auto parser = make_parser("A,B\r\n1,2\r\n3,4\r\n", {.has_headers = true});
+  auto parser = make_parser("A,B\r\n1,2\r\n3,4\r\n", {});
 
   EXPECT_EQ(parser.row_count(), 2u);
   EXPECT_EQ(parser.get_cell(0, 0), "1");
@@ -166,7 +166,7 @@ TEST(CSVParserTest, CRLFLineEndings)
 
 TEST(CSVParserTest, LFLineEndings)
 {
-  auto parser = make_parser("A,B\n1,2\n3,4\n", {.has_headers = true});
+  auto parser = make_parser("A,B\n1,2\n3,4\n", {});
 
   EXPECT_EQ(parser.row_count(), 2u);
   EXPECT_EQ(parser.get_cell(0, 0), "1");
@@ -175,7 +175,7 @@ TEST(CSVParserTest, LFLineEndings)
 
 TEST(CSVParserTest, MixedLineEndings)
 {
-  auto parser = make_parser("A,B\r\n1,2\n3,4\r\n", {.has_headers = true});
+  auto parser = make_parser("A,B\r\n1,2\n3,4\r\n", {});
 
   EXPECT_EQ(parser.row_count(), 2u);
   EXPECT_EQ(parser.get_cell(0, 0), "1");
@@ -185,14 +185,14 @@ TEST(CSVParserTest, MixedLineEndings)
 TEST(CSVParserTest, LineEndingPreservationInQuoted)
 {
   // Test that CRLF inside quoted field is preserved
-  auto parser = make_parser("A,B\n\"Line1\r\nLine2\",C\n", {.has_headers = true});
+  auto parser = make_parser("A,B\n\"Line1\r\nLine2\",C\n", {});
 
   EXPECT_EQ(parser.get_cell(0, 0), "Line1\r\nLine2");
 }
 
 TEST(CSVParserTest, EscapedDoubleQuotes)
 {
-  auto parser = make_parser("A\n\"a\"\"b\"\"c\"\n", {.has_headers = true});
+  auto parser = make_parser("A\n\"a\"\"b\"\"c\"\n", {});
 
   EXPECT_EQ(parser.get_cell(0, 0), "a\"b\"c");
 }
@@ -319,35 +319,35 @@ TEST(CSVParserTest, NonStrictMode_QuotesInUnquotedField)
 
 TEST(CSVParserTest, RowIndexOutOfRange)
 {
-  auto parser = make_parser("A\n1\n", {.has_headers = true});
+  auto parser = make_parser("A\n1\n", {});
 
   EXPECT_THROW(parser.get_row(5), std::out_of_range);
 }
 
 TEST(CSVParserTest, ColumnIndexOutOfRange)
 {
-  auto parser = make_parser("A,B\n1,2\n", {.has_headers = true});
+  auto parser = make_parser("A,B\n1,2\n", {});
 
   EXPECT_THROW(parser.get_column(10), std::out_of_range);
 }
 
 TEST(CSVParserTest, CellRowIndexOutOfRange)
 {
-  auto parser = make_parser("A\n1\n", {.has_headers = true});
+  auto parser = make_parser("A\n1\n", {});
 
   EXPECT_THROW(parser.get_cell(10, 0), std::out_of_range);
 }
 
 TEST(CSVParserTest, CellColumnIndexOutOfRange)
 {
-  auto parser = make_parser("A\n1\n", {.has_headers = true});
+  auto parser = make_parser("A\n1\n", {});
 
   EXPECT_THROW(parser.get_cell(0, 10), std::out_of_range);
 }
 
 TEST(CSVParserTest, InvalidHeaderName)
 {
-  auto parser = make_parser("Name,Age\nAlice,30\n", {.has_headers = true});
+  auto parser = make_parser("Name,Age\nAlice,30\n", {});
 
   EXPECT_THROW(parser.get_column("NonExistent"), std::invalid_argument);
 }
@@ -405,7 +405,7 @@ TEST(CSVParserTest, UTF8BOMDetection)
   // UTF-8 BOM: 0xEF 0xBB 0xBF
   std::string csv_with_bom = "\xEF\xBB\xBFName,Age\nAlice,30\n";
 
-  auto parser = make_parser(csv_with_bom, {.has_headers = true});
+  auto parser = make_parser(csv_with_bom, {});
 
   auto headers = parser.get_headers();
   ASSERT_EQ(headers.size(), 2u);
@@ -415,7 +415,7 @@ TEST(CSVParserTest, UTF8BOMDetection)
 
 TEST(CSVParserTest, NoBOMHandling)
 {
-  auto parser = make_parser("Name,Age\nAlice,30\n", {.has_headers = true});
+  auto parser = make_parser("Name,Age\nAlice,30\n", {});
 
   auto headers = parser.get_headers();
   EXPECT_EQ(headers[0], "Name");
@@ -464,7 +464,7 @@ TEST(CSVParserTest, InvalidUTF8_NoValidation)
 
 TEST(CSVParserTest, RangeBasedForLoop)
 {
-  auto parser = make_parser("A,B\n1,2\n3,4\n5,6\n", {.has_headers = true});
+  auto parser = make_parser("A,B\n1,2\n3,4\n5,6\n", {});
 
   int count = 0;
   for (const auto& row : parser)
@@ -477,7 +477,7 @@ TEST(CSVParserTest, RangeBasedForLoop)
 
 TEST(CSVParserTest, BeginEnd)
 {
-  auto parser = make_parser("A\n1\n2\n3\n", {.has_headers = true});
+  auto parser = make_parser("A\n1\n2\n3\n", {});
 
   auto it = parser.begin();
   EXPECT_EQ((*it)[0], "1");
@@ -491,7 +491,7 @@ TEST(CSVParserTest, BeginEnd)
 
 TEST(CSVParserTest, CBeginCEnd)
 {
-  auto parser = make_parser("A\n1\n", {.has_headers = true});
+  auto parser = make_parser("A\n1\n", {});
 
   auto it = parser.cbegin();
   EXPECT_NE(it, parser.cend());
@@ -501,7 +501,7 @@ TEST(CSVParserTest, CBeginCEnd)
 
 TEST(CSVParserTest, EmptyIterator)
 {
-  auto parser = make_parser("A,B\n", {.has_headers = true});
+  auto parser = make_parser("A,B\n", {});
 
   EXPECT_EQ(parser.begin(), parser.end());
 }
@@ -512,7 +512,7 @@ TEST(CSVParserTest, EmptyIterator)
 
 TEST(CSVParserTest, ToRfc4180Simple)
 {
-  auto parser = make_parser("A,B\n1,2\n3,4\n", {.has_headers = true});
+  auto parser = make_parser("A,B\n1,2\n3,4\n", {});
 
   std::string output = parser.to_rfc_4180();
 
@@ -546,7 +546,7 @@ TEST(CSVParserTest, ToRfc4180EscapesQuotes)
 
 TEST(CSVParserTest, WriteRfc4180ToStream)
 {
-  auto parser = make_parser("A\n1\n2\n", {.has_headers = true});
+  auto parser = make_parser("A\n1\n2\n", {});
 
   std::ostringstream oss;
   parser.write_rfc_4180(oss);
@@ -558,10 +558,10 @@ TEST(CSVParserTest, RoundTripPreservation)
 {
   std::string original = "Name,Age\r\nAlice,30\r\nBob,25\r\n";
 
-  auto parser1 = make_parser(original, {.has_headers = true});
+  auto parser1 = make_parser(original, {});
   std::string output = parser1.to_rfc_4180();
 
-  auto parser2 = make_parser(output, {.has_headers = true});
+  auto parser2 = make_parser(output, {});
 
   EXPECT_EQ(parser1.row_count(), parser2.row_count());
   EXPECT_EQ(parser1.column_count(), parser2.column_count());
@@ -578,7 +578,7 @@ TEST(CSVParserTest, RoundTripPreservation)
 
 TEST(CSVParserTest, SingleRowSingleColumn)
 {
-  auto parser = make_parser("A\n1\n", {.has_headers = true});
+  auto parser = make_parser("A\n1\n", {});
 
   EXPECT_EQ(parser.row_count(), 1u);
   EXPECT_EQ(parser.column_count(), 1u);
@@ -587,28 +587,28 @@ TEST(CSVParserTest, SingleRowSingleColumn)
 
 TEST(CSVParserTest, SingleRow)
 {
-  auto parser = make_parser("A,B,C\n1,2,3\n", {.has_headers = true});
+  auto parser = make_parser("A,B,C\n1,2,3\n", {});
 
   EXPECT_EQ(parser.row_count(), 1u);
 }
 
 TEST(CSVParserTest, SingleColumn)
 {
-  auto parser = make_parser("A\n1\n2\n3\n", {.has_headers = true});
+  auto parser = make_parser("A\n1\n2\n3\n", {});
 
   EXPECT_EQ(parser.column_count(), 1u);
 }
 
 TEST(CSVParserTest, TrailingNewline)
 {
-  auto parser = make_parser("A\n1\n2\n", {.has_headers = true});
+  auto parser = make_parser("A\n1\n2\n", {});
 
   EXPECT_EQ(parser.row_count(), 2u);
 }
 
 TEST(CSVParserTest, NoTrailingNewline)
 {
-  auto parser = make_parser("A\n1\n2", {.has_headers = true});
+  auto parser = make_parser("A\n1\n2", {});
 
   EXPECT_EQ(parser.row_count(), 2u);
 }
